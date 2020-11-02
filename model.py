@@ -1,5 +1,9 @@
+import os
 import scipy.io as sio
 import numpy as np
+
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 
 def get_data():
@@ -16,5 +20,16 @@ def get_data():
     return dataset
 
 
+def peek_image(path, idx, labels):
+    image_names = os.listdir("./data/" + path)
+    img = mpimg.imread("./data/" + path + "/" + image_names[idx])
+    print("image is", image_names[idx])
+    name = image_names[idx].split('.')
+    print("the label is " + str(labels[int(name[0]) - 1, 4]))
+    plt.imshow(img)
+    plt.show()
+
+
 data_arr = get_data()
+peek_image("car_ims", 0, data_arr)
 print(data_arr[:5])
