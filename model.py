@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 
-def get_data():
+def load_data():
     mat = sio.loadmat('./data/cars_annos.mat')
     annotations = mat["annotations"]
     _, total_size = annotations.shape
@@ -17,19 +17,21 @@ def get_data():
         img_id = int(img_name) - 1
         for j in range(6):
             dataset[img_id, j] = int(annotations[:, i][0][j + 1][0])
+
     return dataset
 
 
-def peek_image(path, idx, labels):
-    image_names = os.listdir("./data/" + path)
-    img = mpimg.imread("./data/" + path + "/" + image_names[idx])
-    print("image is", image_names[idx])
-    name = image_names[idx].split('.')
-    print("the label is " + str(labels[int(name[0]) - 1, 4]))
+def peek_image(path, idx, dataset):
+    files = os.listdir("./data/" + path)
+    img = mpimg.imread("./data/" + path + "/" + files[idx])
+    print("image is", files[idx])
+    img_name, extension = files[idx].split('.')
+    print(img_name)
+    print("the label is " + str(dataset[int(img_name[0]) - 1, 4]))
     plt.imshow(img)
     plt.show()
 
 
-data_arr = get_data()
+data_arr = load_data()
 peek_image("car_ims", 0, data_arr)
 print(data_arr[:5])
