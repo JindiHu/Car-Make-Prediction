@@ -53,6 +53,7 @@ def load_data():
             print('{:>6} images loaded'.format(str(i + 1)))
         if i == 999:
             break
+    print('{:>6} images in total'.format(len(data_labels)))
     images_rgb = np.array(images_rgb, dtype=object)
     print('images loaded!')
     return images_rgb, data_labels
@@ -74,19 +75,7 @@ def make_car_make_prediction_model(num_ch_c1, num_ch_c2, use_dropout=False):
 
 
 def main():
-    seed = 0
-    np.random.seed(seed)
-    tf.random.set_seed(seed)
-
-    num_ch_c1 = 50
-    num_ch_c2 = 60
-
-    epochs = 1000
-    batch_size = 128
-    learning_rate = 0.001
-    optimizer_ = 'SGD'
-
-    model = make_model(num_ch_c1, num_ch_c2, use_dropout)
+    model = make_car_make_prediction_model(num_ch_c1, num_ch_c2, use_dropout)
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
     if optimizer_ == 'SGD':
@@ -101,8 +90,8 @@ def main():
         raise NotImplementedError(f'You do not need to handle [{optimizer_}] in this project.')
 
     images, labels = load_data()
-    print(images)
-    print(labels)
+    # print(images)
+    # print(labels)
 
     if not os.path.exists('./models'):
         os.mkdir('./models')
