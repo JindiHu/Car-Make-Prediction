@@ -4,7 +4,7 @@ import scipy.io as sio
 import numpy as np
 import tensorflow.keras as keras
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+from PIL import Image
 from tensorflow.keras import layers
 
 seed = 0
@@ -41,22 +41,57 @@ def load_data():
     mat = sio.loadmat('./data/cars_annos.mat')
     annotations = mat["annotations"]
     _, total_size = annotations.shape
-    images_rgb = []
-    data_labels = np.zeros((total_size, 6))
+    train_x = []
+    train_y = []
+    test_x = []
+    test_y = []
+    # images_rgb = []
+    # data_labels = []
+    count = 1
     for i in range(total_size):
+        bbox_x1 = annotations[:, i][0][1][0][0]
+        bbox_y1 = annotations[:, i][0][2][0][0]
+        bbox_x2 = annotations[:, i][0][3][0][0]
+        bbox_y2 = annotations[:, i][0][4][0][0]
+        class_label = annotations[:, i][0][5][0][0]
+        is_test = annotations[:, i][0][6][0][0]
+        # print(bbox_x1, bbox_y1, bbox_x2, bbox_y2)
         image_path = annotations[:, i][0][0][0]
-        image_rgb = mpimg.imread("./data/" + image_path)
-        images_rgb.append(image_rgb)
-        for j in range(6):
-            data_labels[i, j] = int(annotations[:, i][0][j + 1][0])
-        if (i + 1) % 1000 == 0:
-            print('{:>6} images loaded'.format(str(i + 1)))
-        if i == 999:
+        # img = Image.open("./data/" + image_path)
+        img = tf.keras.preprocessing.image.load_img("./data/" + image_path)
+        img = tf.keras.preprocessing.image.img_to_array(img) / 255
+        img = tf.image.crop_to_bounding_box(img, offset_height=bbox_y1, offset_width=bbox_x1,
+                                            target_height=(bbox_y2 - bbox_y1), target_width=(bbox_x2 - bbox_x1))
+        img = tf.image.resize_with_pad(img, target_height=128, target_width=128, antialias=True)
+        # if img.mode == 'RGB':
+        #     h_resize = 128
+        #     w_resize = 128
+        # cropped_img = img.crop((bbox_x1, bbox_y1, bbox_x2, bbox_y2))
+        # resized_img = np.array(cropped_img.resize((w_resize, h_resize), Image.ANTIALIAS))
+        # cropped_img.thumbnail((w_resize, h_resize), Image.ANTIALIAS)
+        # resized_img = np.array(cropped_img)
+        if is_test == 0:
+            train_x.append(img)
+            train_y.append(class_label)
+        else:
+            test_x.append(img)
+            test_y.append(class_label)
+        if count % 1000 == 0:
+            print('{:>6} images loaded'.format(str(count)))
+        if count == 100:
             break
-    print('{:>6} images in total'.format(len(data_labels)))
-    images_rgb = np.array(images_rgb, dtype=object)
+        count += 1
+    print('{:>6} images for training'.format(len(train_x)))
+    print('{:>6} images for testing'.format(len(test_x)))
+
+    # train_x = train_x
+    print('test')
+    # train_x = tf.image.resize(train_x, size=(128, 128))
+    train_y = np.array(train_y)
+    # test_x = np.array(test_x)
+    test_y = np.array(test_y)
     print('images loaded!')
-    return images_rgb, data_labels
+    return train_x, train_y, test_x, test_y
 
 
 def make_car_make_prediction_model(num_ch_c1, num_ch_c2, use_dropout=False):
@@ -78,6 +113,14 @@ def main():
     model = make_car_make_prediction_model(num_ch_c1, num_ch_c2, use_dropout)
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
 
+    train_x, train_y, test_x, test_y = load_data()
+    # print(train_x[45])
+    plt.imshow(train_x[45])
+    print(train_y[45])
+    plt.show()
+    # print(images.shape)
+    # print(labels.shape)
+
     if optimizer_ == 'SGD':
         optimizer = keras.optimizers.SGD(learning_rate=learning_rate)
     elif optimizer_ == 'SGD-momentum':  # Question 3(a)
@@ -88,10 +131,6 @@ def main():
         raise NotImplementedError('Complete it by yourself')
     else:
         raise NotImplementedError(f'You do not need to handle [{optimizer_}] in this project.')
-
-    images, labels = load_data()
-    # print(images)
-    # print(labels)
 
     if not os.path.exists('./models'):
         os.mkdir('./models')
